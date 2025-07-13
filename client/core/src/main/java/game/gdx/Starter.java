@@ -2,8 +2,8 @@ package game.gdx;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Net;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -14,13 +14,18 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
+
+import com.github.czyzby.websocket.WebSocket;
+import com.github.czyzby.websocket.WebSocketAdapter;
+import com.github.czyzby.websocket.WebSockets;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;
 
-import java.util.List;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Starter extends ApplicationAdapter {
+    private WebSocket socket;
+
     public static final float WORLD_RADIUS = 3000f;
     public static final Vector2 WORLD_CENTER = new Vector2(0, 0);
 
@@ -68,6 +73,8 @@ public class Starter extends ApplicationAdapter {
             EnemyPanzer newEnemy = new EnemyPanzer(new Vector2(x,y), 64,64,new Texture("panzer_enemy.png"), 5);
             enemies.add(newEnemy);
         }
+
+        connectToServer();
     }
 
     @Override
@@ -129,5 +136,35 @@ public class Starter extends ApplicationAdapter {
         for (EnemyPanzer enemyPanzer : enemies) {
             enemyPanzer.dispose();
         }
+        if (socket != null) {
+            socket.close();
+        }
+    }
+
+    private void connectToServer() {
+        socket = WebSockets.newSocket("ws://localhost:8888/panzer-ws");
+        socket.setSendGracefully(true);
+
+        socket.addListener(new WebSocketAdapter() {
+            @Override
+            public boolean onOpen(WebSocket webSocket) {
+                graphicalConsole.addMessage("Connected to server!");
+                return false;
+            }
+
+            @Override
+            public boolean onMessage(WebSocket webSocket, String packet) {
+                graphicalConsole.addMessage(packet);
+                return false;
+            }
+
+            @Override
+            public boolean onError(WebSocket webSocket, Throwable error) {
+                graphicalConsole.addMessage("ERROR: " + error.getMessage());
+                return false;
+            }
+        });
+
+        socket.connect();
     }
 }
