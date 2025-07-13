@@ -55,7 +55,7 @@ public class Starter extends ApplicationAdapter {
 
         me = new MyPanzer(new Vector2(50,50), 64, 64, new Texture("panzer_me.png"), 5);
 
-        graphicalConsole = new GraphicalConsole(500, 500);
+        graphicalConsole = new GraphicalConsole(Gdx.graphics.getWidth() - 20, 500);
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         graphicalConsole.updatePosition(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -149,6 +149,7 @@ public class Starter extends ApplicationAdapter {
             @Override
             public boolean onOpen(WebSocket webSocket) {
                 graphicalConsole.addMessage("Connected to server!");
+                socket.send(" Hello server");
                 return false;
             }
 

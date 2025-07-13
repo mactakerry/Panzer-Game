@@ -9,10 +9,15 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
+    private final PanzerWebSocketHandler panzerWebSocketHandler;
+
+    public WebSocketConfig(PanzerWebSocketHandler panzerWebSocketHandler) {
+        this.panzerWebSocketHandler = panzerWebSocketHandler;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new PanzerWebSocketHandler(), "/panzer-ws")
+        registry.addHandler(panzerWebSocketHandler, "/panzer-ws")
                 .setAllowedOrigins("*");
     }
 }
