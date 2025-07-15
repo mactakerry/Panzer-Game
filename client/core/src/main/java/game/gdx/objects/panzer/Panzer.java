@@ -5,8 +5,8 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
-import static game.gdx.Starter.WORLD_CENTER;
-import static game.gdx.Starter.WORLD_RADIUS;
+import static game.gdx.screens.GameScreen.WORLD_CENTER;
+import static game.gdx.screens.GameScreen.WORLD_RADIUS;
 
 public abstract class Panzer {
     private long id;

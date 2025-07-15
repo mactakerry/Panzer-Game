@@ -3,7 +3,8 @@ package game.gdx.lwjgl3;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.github.czyzby.websocket.CommonWebSockets;
-import game.gdx.Starter;
+import game.gdx.screens.GameScreen;
+import game.gdx.screens.Starter;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {

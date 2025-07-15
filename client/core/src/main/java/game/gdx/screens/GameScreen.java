@@ -1,14 +1,14 @@
-package game.gdx;
+package game.gdx.screens;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -18,6 +18,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSocketAdapter;
 import com.github.czyzby.websocket.WebSockets;
+import game.gdx.GraphicalConsole;
+import game.gdx.KeyboardAdapter;
 import game.gdx.objects.network.NetworkMessage;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;
@@ -25,7 +27,8 @@ import game.gdx.objects.network.TankState;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class Starter extends ApplicationAdapter {
+public class GameScreen extends ScreenAdapter {
+    private final Starter starter;
     private WebSocket socket;
 
     public static final float WORLD_RADIUS = 3000f;
@@ -53,8 +56,12 @@ public class Starter extends ApplicationAdapter {
     private TankState tankState;
     private final Array<EnemyPanzer> enemies = new Array<>();
 
+    public GameScreen(Starter starter) {
+        this.starter = starter;
+    }
+
     @Override
-    public void create() {
+    public void show() {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
         font = new BitmapFont();
@@ -80,7 +87,7 @@ public class Starter extends ApplicationAdapter {
     }
 
     @Override
-    public void render() {
+    public void render(float delta) {
         me.MoveTo(keyboardAdapter.getDirection(5));
 
         Vector2 mousePosition = keyboardAdapter.getMousePosition();
@@ -132,7 +139,6 @@ public class Starter extends ApplicationAdapter {
 
 
         // Отправляем состояние с интервалом
-        float delta = Gdx.graphics.getDeltaTime();
         stateUpdateTimer += delta;
         if (stateUpdateTimer >= STATE_UPDATE_INTERVAL) {
             sendTankState();
