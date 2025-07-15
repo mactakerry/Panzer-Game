@@ -64,6 +64,14 @@
 			<classifier>natives-desktop</classifier>
 			<version>1.13.1</version>
 		</dependency>
+
+		<!-- Lombok -->
+		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.38</version>
+		</dependency>
 	</dependencies>
 
 	<build>

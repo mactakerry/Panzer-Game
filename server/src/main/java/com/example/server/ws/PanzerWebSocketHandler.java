@@ -1,16 +1,18 @@
 package com.example.server.ws;
 
 import com.badlogic.gdx.utils.Array;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.IOException;
-
 
 @Component
+@Getter
+@Setter
 public class PanzerWebSocketHandler extends TextWebSocketHandler {
     private final Array<WebSocketSession> sessions = new Array<>();
 
@@ -34,12 +36,4 @@ public class PanzerWebSocketHandler extends TextWebSocketHandler {
     }
 
 
-
-    public void setWebSocketEventListener(WebSocketEventListener webSocketEventListener) {
-        this.webSocketEventListener = webSocketEventListener;
-    }
-
-    public Array<WebSocketSession> getSessions() {
-        return sessions;
-    }
 }

@@ -2,7 +2,6 @@ package game.gdx;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Net;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,13 +12,16 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSocketAdapter;
 import com.github.czyzby.websocket.WebSockets;
+import game.gdx.objects.network.NetworkMessage;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;
+import game.gdx.objects.network.TankState;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -28,6 +30,11 @@ public class Starter extends ApplicationAdapter {
 
     public static final float WORLD_RADIUS = 3000f;
     public static final Vector2 WORLD_CENTER = new Vector2(0, 0);
+
+    Texture enemyTexture;
+
+    private float stateUpdateTimer = 0;
+    private static final float STATE_UPDATE_INTERVAL = 0.005f;
 
     private OrthographicCamera camera;
 
@@ -43,6 +50,7 @@ public class Starter extends ApplicationAdapter {
     private Vector3 mouseWorld = new Vector3();
 
     private MyPanzer me;
+    private TankState tankState;
     private final Array<EnemyPanzer> enemies = new Array<>();
 
     @Override
@@ -51,9 +59,13 @@ public class Starter extends ApplicationAdapter {
         shapeRenderer = new ShapeRenderer();
         font = new BitmapFont();
 
+        enemyTexture = new Texture("panzer_enemy.png");
+
         Gdx.input.setInputProcessor(keyboardAdapter);
 
         me = new MyPanzer(new Vector2(50,50), 64, 64, new Texture("panzer_me.png"), 5);
+        me.setId(1);
+        tankState = new TankState();
 
         graphicalConsole = new GraphicalConsole(Gdx.graphics.getWidth() - 20, 500);
         uiCamera = new OrthographicCamera();
@@ -63,16 +75,6 @@ public class Starter extends ApplicationAdapter {
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(me.getPosition().x, me.getPosition().y, 0);
         camera.update();
-
-
-
-        for (int i = 0; i < 10; i++) {
-            float x = MathUtils.random(Gdx.graphics.getWidth());
-            float y = MathUtils.random(Gdx.graphics.getHeight());
-
-            EnemyPanzer newEnemy = new EnemyPanzer(new Vector2(x,y), 64,64,new Texture("panzer_enemy.png"), 5);
-            enemies.add(newEnemy);
-        }
 
         connectToServer();
     }
@@ -104,8 +106,8 @@ public class Starter extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         me.render(batch);
-        for (EnemyPanzer enemy : enemies) {
-            enemy.rotateTo(me.getPosition());
+        for (int i = 0; i < enemies.size; i++) {
+            EnemyPanzer enemy = enemies.get(i);
             enemy.render(batch);
         }
 
@@ -127,15 +129,22 @@ public class Starter extends ApplicationAdapter {
             batch.end();
 
         }
+
+
+        // Отправляем состояние с интервалом
+        float delta = Gdx.graphics.getDeltaTime();
+        stateUpdateTimer += delta;
+        if (stateUpdateTimer >= STATE_UPDATE_INTERVAL) {
+            sendTankState();
+            stateUpdateTimer = 0;
+        }
     }
 
     @Override
     public void dispose() {
         batch.dispose();
         me.dispose();
-        for (EnemyPanzer enemyPanzer : enemies) {
-            enemyPanzer.dispose();
-        }
+        enemyTexture.dispose();
         if (socket != null) {
             socket.close();
         }
@@ -149,13 +158,31 @@ public class Starter extends ApplicationAdapter {
             @Override
             public boolean onOpen(WebSocket webSocket) {
                 graphicalConsole.addMessage("Connected to server!");
-                socket.send(" Hello server");
+
+                Json json = new Json();
+                NetworkMessage message = new NetworkMessage();
+                message.type = "CONSOLE";
+                message.payload = "Hello server";
+                socket.send(json.toJson(message));
                 return false;
             }
 
             @Override
             public boolean onMessage(WebSocket webSocket, String packet) {
-                graphicalConsole.addMessage(packet);
+                Json json = new Json();
+                NetworkMessage message = json.fromJson(NetworkMessage.class, packet);
+                switch (message.type) {
+                    case "CONSOLE":
+                        graphicalConsole.addMessage(packet);
+                        break;
+                    case "STATE_UPDATE":
+                        TankState state = json.fromJson(TankState.class, message.payload);
+                        if (state.playerId != me.getId()) {
+                            updateEnemyTank(state);
+                        }
+                        break;
+                }
+
                 return false;
             }
 
@@ -164,8 +191,50 @@ public class Starter extends ApplicationAdapter {
                 graphicalConsole.addMessage("ERROR: " + error.getMessage());
                 return false;
             }
+
+            @Override
+            public boolean onClose(WebSocket webSocket, int closeCode, String reason) {
+                graphicalConsole.addMessage("CLOSE");
+                return false;
+            }
         });
 
         socket.connect();
+    }
+
+    private void sendTankState() {
+        if (socket != null && socket.isOpen()) {
+            Json json = new Json();
+
+            tankState.playerId = me.getId();
+            tankState.position = me.getPosition();
+            tankState.angle = me.getAngle();
+
+            NetworkMessage message = new NetworkMessage();
+            message.type = "STATE_UPDATE";
+            message.payload = json.toJson(tankState);
+
+            socket.send(json.toJson(message));
+        }
+    }
+
+    private void updateEnemyTank(TankState state) {
+        for (EnemyPanzer enemy : enemies) {
+            if (enemy.getId() == state.playerId) {
+                enemy.setPosition(state.position);
+                enemy.setAngle(state.angle);
+                return;
+            }
+        }
+
+        // Если танк с таким ID не найден - создаем нового
+        EnemyPanzer newEnemy = new EnemyPanzer(
+            state.position,
+            64, 64,
+            enemyTexture,
+            5
+        );
+        newEnemy.setId(state.playerId);
+        enemies.add(newEnemy);
     }
 }

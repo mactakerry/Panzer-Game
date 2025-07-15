@@ -9,6 +9,8 @@ import static game.gdx.Starter.WORLD_CENTER;
 import static game.gdx.Starter.WORLD_RADIUS;
 
 public abstract class Panzer {
+    private long id;
+
     protected Vector2 position = new Vector2();
     protected Vector2 angle = new Vector2();
 
@@ -72,5 +74,21 @@ public abstract class Panzer {
 
     public Vector2 getAngle() {
         return angle;
+    }
+
+    public void setAngle(Vector2 angle) {
+        this.angle = angle;
+    }
+
+    public void setPosition(Vector2 position) {
+        this.position = position;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }
