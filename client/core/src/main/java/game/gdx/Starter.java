@@ -1,18 +1,19 @@
-package game.gdx.screens;
+package game.gdx;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import game.gdx.screens.AuthScreen;
 
 public class Starter extends Game {
-    SpriteBatch batch;
-    ShapeRenderer shapeRenderer;
-    BitmapFont font;
+    public SpriteBatch batch;
+    public ShapeRenderer shapeRenderer;
+    public BitmapFont font;
 
-    Texture textureMe;
-    Texture textureEnemy;
+    public Texture textureMe;
+    public Texture textureEnemy;
 
     @Override
     public void create() {

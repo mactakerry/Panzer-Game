@@ -25,6 +25,10 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    public boolean existByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
     public User getUserById(Long id) {
         Optional<User> userOptional = userRepository.findById(id);
         return userOptional.orElse(null);

@@ -1,11 +1,13 @@
 package game.gdx.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Net;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.net.HttpRequestBuilder;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -13,7 +15,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.ScreenUtils;
+import game.gdx.Starter;
+import game.gdx.service.PlayerIdentity;
 
 public class AuthScreen extends ScreenAdapter {
     private final Starter starter;
@@ -116,8 +122,58 @@ public class AuthScreen extends ScreenAdapter {
     }
 
     private void handleLogin() {
-        String login = loginField.getText();
+        String username = loginField.getText();
         String password = passwordField.getText();
+
+        Gdx.app.log("login", username + " " + password);
+
+        String url =  "http://localhost:8888/public/login";
+        String jsonBody = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password);
+
+        HttpRequestBuilder requestBuilder = new HttpRequestBuilder();
+        Net.HttpRequest request = requestBuilder
+            .newRequest()
+            .method(Net.HttpMethods.POST)
+            .url(url)
+            .header("Content-Type", "application/json")
+            .content(jsonBody)
+            .timeout(5000)
+            .build();
+
+        Gdx.net.sendHttpRequest(request, new Net.HttpResponseListener() {
+            @Override
+            public void handleHttpResponse(Net.HttpResponse httpResponse) {
+                int statusCode = httpResponse.getStatus().getStatusCode();
+                String response = httpResponse.getResultAsString();
+
+                if (statusCode == 200) {
+                    Gdx.app.log("Login", "Success! ");
+                    JsonReader reader = new JsonReader();
+                    JsonValue root = reader.parse(response);
+
+                    String token = root.getString("token");
+                    long id = root.getLong("id");
+
+                    PlayerIdentity identity = PlayerIdentity.getInstance();
+
+                    identity.setId(id);
+                    identity.setToken(token);
+                    identity.save();
+                } else {
+                    Gdx.app.error("Login", "Error " + statusCode + ": " + response);
+                }
+            }
+
+            @Override
+            public void failed(Throwable t) {
+                Gdx.app.error("Login", "client error: ", t);
+            }
+
+            @Override
+            public void cancelled() {
+                Gdx.app.log("Login", "request cancelled");
+            }
+        });
     }
 
     private void handleRegistration() {

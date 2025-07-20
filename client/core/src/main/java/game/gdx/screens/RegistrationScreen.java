@@ -1,11 +1,13 @@
 package game.gdx.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Net;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.net.HttpRequestBuilder;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -14,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.ScreenUtils;
+import game.gdx.Starter;
 
 public class RegistrationScreen extends ScreenAdapter {
     private final Starter starter;
@@ -133,14 +136,56 @@ public class RegistrationScreen extends ScreenAdapter {
     }
 
     private void handleRegistration() {
+
         String username = usernameField.getText();
         String password = passwordField.getText();
         String repeatPassword = repeatPasswordField.getText();
+
+        Gdx.app.log("reg", username + " " + password + " " + repeatPassword);
+
 
         if (!password.equals(repeatPassword)) {
             System.out.println("Пароли не совпадают!");
             return;
         }
+
+        String url =  "http://localhost:8888/public/reg";
+        String jsonBody = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password);
+
+        HttpRequestBuilder requestBuilder = new HttpRequestBuilder();
+        Net.HttpRequest request = requestBuilder
+            .newRequest()
+            .method(Net.HttpMethods.POST)
+            .url(url)
+            .header("Content-Type", "application/json")
+            .content(jsonBody)
+            .timeout(5000)
+            .build();
+
+        Gdx.net.sendHttpRequest(request, new Net.HttpResponseListener() {
+            @Override
+            public void handleHttpResponse(Net.HttpResponse httpResponse) {
+                int statusCode = httpResponse.getStatus().getStatusCode();
+                String response = httpResponse.getResultAsString();
+
+                if (statusCode == 200) {
+                    Gdx.app.log("Reg", "Success! " + response);
+                    Gdx.app.postRunnable(() -> starter.setScreen(new AuthScreen(starter)));
+                } else {
+                    Gdx.app.error("Reg", "Error " + statusCode + ": " + response);
+                }
+            }
+
+            @Override
+            public void failed(Throwable t) {
+                Gdx.app.error("Reg", "client error", t);
+            }
+
+            @Override
+            public void cancelled() {
+                Gdx.app.log("Reg", "request cancelled");
+            }
+        });
     }
 
     @Override

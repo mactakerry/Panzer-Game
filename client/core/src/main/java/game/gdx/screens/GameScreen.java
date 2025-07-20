@@ -1,6 +1,5 @@
 package game.gdx.screens;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
@@ -20,6 +19,7 @@ import com.github.czyzby.websocket.WebSocketAdapter;
 import com.github.czyzby.websocket.WebSockets;
 import game.gdx.GraphicalConsole;
 import game.gdx.KeyboardAdapter;
+import game.gdx.Starter;
 import game.gdx.objects.network.NetworkMessage;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;

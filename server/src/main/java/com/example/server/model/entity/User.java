@@ -1,6 +1,7 @@
 package com.example.server.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,13 +26,25 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Transient
     private boolean accountNonExpired = true;
+    @Transient
     private boolean accountNonLocked = true;
+    @Transient
     private boolean credentialsNonExpired = true;
+    @Transient
     private boolean enabled = true;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.PLAYER;
+
+    public User() {}
+
+    public User(@NotBlank String username, @NotBlank String password) {
+        this.username = username;
+        this.password = password;
+        nickName = username;
+    }
 
     public enum Role implements GrantedAuthority {
         PLAYER;
