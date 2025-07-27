@@ -29,6 +29,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/panzer-ws").permitAll()
                         .anyRequest().authenticated()
                 );
 

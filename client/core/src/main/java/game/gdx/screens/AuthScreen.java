@@ -159,6 +159,8 @@ public class AuthScreen extends ScreenAdapter {
                     identity.setId(id);
                     identity.setToken(token);
                     identity.save();
+
+                    Gdx.app.postRunnable(() -> starter.setScreen(new GameScreen(starter)));
                 } else {
                     Gdx.app.error("Login", "Error " + statusCode + ": " + response);
                 }

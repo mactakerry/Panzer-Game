@@ -24,6 +24,7 @@ import game.gdx.objects.network.NetworkMessage;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;
 import game.gdx.objects.network.TankState;
+import game.gdx.service.PlayerIdentity;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -34,7 +35,7 @@ public class GameScreen extends ScreenAdapter {
     public static final float WORLD_RADIUS = 3000f;
     public static final Vector2 WORLD_CENTER = new Vector2(0, 0);
 
-    Texture enemyTexture;
+    private Texture textureEnemy;
 
     private float stateUpdateTimer = 0;
     private static final float STATE_UPDATE_INTERVAL = 0.005f;
@@ -62,16 +63,17 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
-        batch = new SpriteBatch();
-        shapeRenderer = new ShapeRenderer();
-        font = new BitmapFont();
+        batch = starter.batch;
+        shapeRenderer = starter.shapeRenderer;
+        font = starter.font;
+        font.getData().setScale(1f);
 
-        enemyTexture = new Texture("panzer_enemy.png");
+        textureEnemy = starter.textureEnemy;
 
         Gdx.input.setInputProcessor(keyboardAdapter);
 
-        me = new MyPanzer(new Vector2(50,50), 64, 64, new Texture("panzer_me.png"), 5);
-        me.setId(1);
+        me = new MyPanzer(new Vector2(50,50), 64, 64, starter.textureMe, 5);
+        me.setId(PlayerIdentity.getInstance().getId());
         tankState = new TankState();
 
         graphicalConsole = new GraphicalConsole(Gdx.graphics.getWidth() - 20, 500);
@@ -137,7 +139,6 @@ public class GameScreen extends ScreenAdapter {
 
         }
 
-
         // Отправляем состояние с интервалом
         stateUpdateTimer += delta;
         if (stateUpdateTimer >= STATE_UPDATE_INTERVAL) {
@@ -148,16 +149,15 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
-        batch.dispose();
-        me.dispose();
-        enemyTexture.dispose();
         if (socket != null) {
             socket.close();
         }
     }
 
     private void connectToServer() {
-        socket = WebSockets.newSocket("ws://localhost:8888/panzer-ws");
+        String token = PlayerIdentity.getInstance().getToken();
+
+        socket = WebSockets.newSocket("ws://localhost:8888/panzer-ws?token=" + token);
         socket.setSendGracefully(true);
 
         socket.addListener(new WebSocketAdapter() {
@@ -237,7 +237,7 @@ public class GameScreen extends ScreenAdapter {
         EnemyPanzer newEnemy = new EnemyPanzer(
             state.position,
             64, 64,
-            enemyTexture,
+            textureEnemy,
             5
         );
         newEnemy.setId(state.playerId);

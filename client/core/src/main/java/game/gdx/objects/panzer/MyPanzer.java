@@ -4,7 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
-import java.util.Vector;
 
 public class MyPanzer extends Panzer {
     public MyPanzer(Vector2 position, float width, float height, Texture texture, int speed) {
