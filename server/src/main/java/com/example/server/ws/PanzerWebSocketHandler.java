@@ -33,7 +33,10 @@ public class PanzerWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        sessions.add(session);
+        synchronized (sessions) {
+            sessions.add(session);
+        }
+
         webSocketEventListener.onConnected(session);
     }
 
@@ -44,7 +47,10 @@ public class PanzerWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        sessions.removeValue(session, true);
+        synchronized (sessions) {
+            sessions.removeValue(session, true);
+        }
+
         webSocketEventListener.onDisconnected(session);
     }
 

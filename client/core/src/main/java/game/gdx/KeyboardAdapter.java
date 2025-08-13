@@ -4,24 +4,37 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.math.Vector2;
+import game.gdx.dto.InputState;
 
 public class KeyboardAdapter extends InputAdapter {
-    private boolean leftPressed;
-    private boolean rightPressed;
-    private boolean upPressed;
-    private boolean downPressed;
-
-    private boolean showConsole = false;
 
     private final Vector2 direction = new Vector2();
     private final Vector2 mousePosition = new Vector2();
 
+    public final InputState inputState = new InputState();
+
+    private boolean showConsole = false;
+
+
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        inputState.firePressed = true;
+        return super.touchDown(screenX, screenY, pointer, button);
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        inputState.firePressed = false;
+        return super.touchUp(screenX, screenY, pointer, button);
+    }
+
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.A) leftPressed = true;
-        if (keycode == Input.Keys.D) rightPressed = true;
-        if (keycode == Input.Keys.W) upPressed = true;
-        if (keycode == Input.Keys.S) downPressed = true;
+        if (keycode == Input.Keys.A) inputState.leftPressed = true;
+        if (keycode == Input.Keys.D) inputState.rightPressed = true;
+        if (keycode == Input.Keys.W) inputState.upPressed = true;
+        if (keycode == Input.Keys.S) inputState.downPressed = true;
 
         if (keycode == Input.Keys.P) showConsole = !showConsole;
 
@@ -30,10 +43,10 @@ public class KeyboardAdapter extends InputAdapter {
 
     @Override
     public boolean keyUp(int keycode) {
-        if (keycode == Input.Keys.A) leftPressed = false;
-        if (keycode == Input.Keys.D) rightPressed = false;
-        if (keycode == Input.Keys.W) upPressed = false;
-        if (keycode == Input.Keys.S) downPressed = false;
+        if (keycode == Input.Keys.A) inputState.leftPressed = false;
+        if (keycode == Input.Keys.D) inputState.rightPressed = false;
+        if (keycode == Input.Keys.W) inputState.upPressed = false;
+        if (keycode == Input.Keys.S) inputState.downPressed = false;
 
 
         return false;
@@ -48,10 +61,10 @@ public class KeyboardAdapter extends InputAdapter {
     public Vector2 getDirection(int speed) {
         direction.set(0,0);
 
-        if (leftPressed) direction.add(-speed, 0);
-        if (rightPressed) direction.add(speed, 0);
-        if (upPressed) direction.add(0, speed);
-        if (downPressed) direction.add(0, -speed);
+        if (inputState.leftPressed) direction.add(-speed, 0);
+        if (inputState.rightPressed) direction.add(speed, 0);
+        if (inputState.upPressed) direction.add(0, speed);
+        if (inputState.downPressed) direction.add(0, -speed);
 
         return direction;
     }

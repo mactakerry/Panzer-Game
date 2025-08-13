@@ -20,10 +20,11 @@ import com.github.czyzby.websocket.WebSockets;
 import game.gdx.GraphicalConsole;
 import game.gdx.KeyboardAdapter;
 import game.gdx.Starter;
-import game.gdx.objects.network.NetworkMessage;
+import game.gdx.dto.GetPanzerState;
+import game.gdx.dto.SendPanzerState;
+import game.gdx.network.NetworkMessage;
 import game.gdx.objects.panzer.EnemyPanzer;
 import game.gdx.objects.panzer.MyPanzer;
-import game.gdx.objects.network.TankState;
 import game.gdx.service.PlayerIdentity;
 
 
@@ -54,7 +55,7 @@ public class GameScreen extends ScreenAdapter {
     private Vector3 mouseWorld = new Vector3();
 
     private MyPanzer me;
-    private TankState tankState;
+    private SendPanzerState sendPanzerState;
     private final Array<EnemyPanzer> enemies = new Array<>();
 
     public GameScreen(Starter starter) {
@@ -74,7 +75,7 @@ public class GameScreen extends ScreenAdapter {
 
         me = new MyPanzer(new Vector2(50,50), 64, 64, starter.textureMe, 5);
         me.setId(PlayerIdentity.getInstance().getId());
-        tankState = new TankState();
+        sendPanzerState = new SendPanzerState();
 
         graphicalConsole = new GraphicalConsole(Gdx.graphics.getWidth() - 20, 500);
         uiCamera = new OrthographicCamera();
@@ -90,12 +91,10 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-        me.MoveTo(keyboardAdapter.getDirection(5));
 
         Vector2 mousePosition = keyboardAdapter.getMousePosition();
         mouseWorld = camera.unproject(new Vector3(mousePosition.x, mousePosition.y, 0)); // преобразование в мировые координаты
         mousePosition.set(mouseWorld.x, mouseWorld.y); // используем тот же Vector2 для экономии памяти
-        me.rotateTo(mousePosition);
 
         camera.position.set(me.getPosition().x, me.getPosition().y, 0);
         camera.update();
@@ -142,7 +141,7 @@ public class GameScreen extends ScreenAdapter {
         // Отправляем состояние с интервалом
         stateUpdateTimer += delta;
         if (stateUpdateTimer >= STATE_UPDATE_INTERVAL) {
-            sendTankState();
+            sendState();
             stateUpdateTimer = 0;
         }
     }
@@ -182,10 +181,8 @@ public class GameScreen extends ScreenAdapter {
                         graphicalConsole.addMessage(packet);
                         break;
                     case "STATE_UPDATE":
-                        TankState state = json.fromJson(TankState.class, message.payload);
-                        if (state.playerId != me.getId()) {
-                            updateEnemyTank(state);
-                        }
+                        GetPanzerState state = json.fromJson(GetPanzerState.class, message.payload);
+                        updateTanks(state);
                         break;
                 }
 
@@ -208,34 +205,42 @@ public class GameScreen extends ScreenAdapter {
         socket.connect();
     }
 
-    private void sendTankState() {
+    private void sendState() {
         if (socket != null && socket.isOpen()) {
             Json json = new Json();
 
-            tankState.playerId = me.getId();
-            tankState.position = me.getPosition();
-            tankState.angle = me.getAngle();
+            sendPanzerState.playerId = me.getId();
+            sendPanzerState.angle = me.getAngle().angleDeg();
+            sendPanzerState.inputState = keyboardAdapter.inputState;
 
             NetworkMessage message = new NetworkMessage();
             message.type = "STATE_UPDATE";
-            message.payload = json.toJson(tankState);
+            message.payload = json.toJson(sendPanzerState);
 
             socket.send(json.toJson(message));
         }
     }
 
-    private void updateEnemyTank(TankState state) {
+    private void updateTanks(GetPanzerState state) {
+        System.out.println(state.toString());
+        if (state.playerId == me.getId()) {
+            me.setPosition(state.x, state.y);
+            me.setAngleDeg(state.angle);
+            return;
+        }
+
         for (EnemyPanzer enemy : enemies) {
             if (enemy.getId() == state.playerId) {
-                enemy.setPosition(state.position);
-                enemy.setAngle(state.angle);
+                enemy.setPosition(state.x, state.y);
+                enemy.setAngleDeg(state.angle);
                 return;
             }
         }
 
         // Если танк с таким ID не найден - создаем нового
+        Vector2 position = new Vector2(state.x, state.y);
         EnemyPanzer newEnemy = new EnemyPanzer(
-            state.position,
+            position,
             64, 64,
             textureEnemy,
             5

@@ -1,4 +1,4 @@
-package game.gdx.objects.network;
+package game.gdx.network;
 
 public class NetworkMessage {
     public String type;

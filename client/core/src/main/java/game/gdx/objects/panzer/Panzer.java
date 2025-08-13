@@ -80,8 +80,17 @@ public abstract class Panzer {
         this.angle = angle;
     }
 
+    public void setAngleDeg(float deg) {
+        this.angle.setAngleDeg(deg);
+    }
+
     public void setPosition(Vector2 position) {
         this.position = position;
+    }
+
+    public void setPosition(float x, float y) {
+        this.position.x = x;
+        this.position.y = y;
     }
 
     public long getId() {

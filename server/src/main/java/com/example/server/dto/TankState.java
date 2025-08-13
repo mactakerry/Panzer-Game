@@ -1,12 +1,13 @@
 package com.example.server.dto;
 
 import lombok.Data;
+import org.springframework.web.socket.WebSocketSession;
 
 @Data
 public class TankState {
-    private String playerId;
-    private float x;
-    private float y;
-    private float angleX;
-    private float angleY;
+    public long playerId;
+    public float angle;
+    public InputState inputState;
+
+    private WebSocketSession session;
 }
